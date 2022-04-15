@@ -1,51 +1,65 @@
+// package main
+
+// import (
+// 	"log"
+
+// 	"github.com/gotk3/gotk3/gtk"
+// )
+
+// func main() {
+// 	gtk.Init(nil)
+
+// 	win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+// 	if err != nil {
+// 		log.Fatal("Unable to create window:", err)
+// 	}
+// 	win.SetTitle("Tucan Search")
+// 	win.SetModal(true)
+// 	win.Connect("destroy", func() {
+// 		gtk.MainQuit()
+// 	})
+
+// 	app := App()
+
+// 	win.Add(app)
+
+// 	win.SetDefaultSize(800, 600)
+
+// 	win.ShowAll()
+
+// 	gtk.Main()
+// }
+
 package main
 
 import (
 	"log"
+	"os"
 
-	"github.com/gotk3/gotk3/gtk"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
 func main() {
-	// Initialize GTK without parsing any command line arguments.
-	gtk.Init(nil)
+	app := gtk.NewApplication("com.github.diamondburned.gotk4-examples.gtk4.simple", 0)
+	app.ConnectActivate(func() { activate(app) })
 
-	// Create a new toplevel window, set its title, and connect it to the
-	// "destroy" signal to exit the GTK main loop when it is destroyed.
-	win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
-	if err != nil {
-		log.Fatal("Unable to create window:", err)
-	}
-	win.SetTitle("Tucan Search")
-	win.SetModal(true)
-	win.Connect("destroy", func() {
-		gtk.MainQuit()
+	glib.TimeoutAdd(2000, func() bool {
+		log.Print("toast")
+		return true
 	})
 
-	// Create a new label widget to show in the window.
+	code := app.Run(os.Args)
+	if code > 0 {
+		os.Exit(code)
+	}
+}
 
-	app := App()
-
-	// Add the label to the window.
-	win.Add(app)
-
-	// Set the default window size.
-	win.SetDefaultSize(800, 600)
-	// win.SetHExpand(false)
-	// win.GetAllocation().SetHeight(600)
-
-	// win.SetSizeRequest(-1, 500)
-	// win.SetHExpand(false)
-	// win.SetVExpand(false)
-	// win.GetAllocation().SetHeight(500)
-
-	// win.GetClip().SetHeight(500)
-	// win.GetAllocation().SetHeight(500)
-
-	// Recursively show all widgets contained in this window.
-	win.ShowAll()
-
-	// Begin executing the GTK main loop.  This blocks until
-	// gtk.MainQuit() is run.
-	gtk.Main()
+func activate(app *gtk.Application) {
+	window := gtk.NewApplicationWindow(app)
+	window.SetTitle("Tucan Search")
+	window.SetModal(true)
+	window.SetChild(gtk.NewLabel("Hello from Go!"))
+	window.SetDefaultSize(800, 600)
+	window.Show()
 }
