@@ -1,17 +1,104 @@
-// package widgets
+package components
 
-// import (
-// 	"C"
-// 	"friedow/tucan-search/plugins"
+import (
+	"strings"
 
-// 	"github.com/gotk3/gotk3/gdk"
-// 	"github.com/gotk3/gotk3/gtk"
-// )
-// import (
-// 	"encoding/json"
-// 	"friedow/tucan-search/models"
-// 	"strings"
-// )
+	"github.com/diamondburned/gotk4/pkg/gdk/v4"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+)
+
+type OptionList struct {
+	*gtk.ScrolledWindow
+
+	pluginsWrapper struct {
+		*gtk.Box
+
+		plugins []*gtk.ListBox
+	}
+}
+
+func NewOptionList() *OptionList {
+	this := OptionList{}
+
+	this.pluginsWrapper.plugins = []Plugin{
+		// 		GitRepositoriesPlugin{},
+		// 		OpenWindowsPlugin{},
+		// 		ApplicationsPlugin{},
+	}
+
+	this.ListBox = gtk.NewListBox()
+
+	this.Append(gtk.NewLabel("test"))
+	this.Append(gtk.NewLabel("test"))
+	this.Append(gtk.NewLabel("test"))
+	this.Append(gtk.NewLabel("test"))
+
+	this.selectFirstRow()
+
+	this.optionList = components.NewOptionList()
+	this.optionList.SetFilterFunction(this.searchBar)
+
+	this.pluginsWrapper.Box = gtk.NewBox(gtk.OrientationHorizontal, 0)
+
+	this.ScrolledWindow = gtk.NewScrolledWindow()
+	this.ScrolledWindow.SetMinContentHeight(700)
+	this.ScrolledWindow.SetChild(this.pluginsWrapper)
+
+	return &this
+}
+
+func (this *OptionList) selectFirstRow() {
+	firstRow := this.RowAtIndex(0)
+	if firstRow != nil {
+		this.SelectRow(firstRow)
+	}
+}
+
+func (this *OptionList) selectPreviousRow() {
+	currentRow := this.SelectedRow()
+	if currentRow == nil {
+		this.selectFirstRow()
+		return
+	}
+
+	nextRow := this.RowAtIndex(currentRow.Index() - 1)
+	if nextRow != nil {
+		this.SelectRow(nextRow)
+	}
+}
+
+func (this *OptionList) selectNextRow() {
+	currentRow := this.SelectedRow()
+	if currentRow == nil {
+		this.selectFirstRow()
+		return
+	}
+
+	nextRow := this.RowAtIndex(currentRow.Index() + 1)
+	if nextRow != nil {
+		this.SelectRow(nextRow)
+	}
+}
+
+func (this *OptionList) OnKeyPress(keyVal uint) bool {
+	if keyVal == gdk.KEY_Up {
+		this.selectPreviousRow()
+		return true
+	}
+
+	if keyVal == gdk.KEY_Down {
+		this.selectNextRow()
+		return true
+	}
+
+	if keyVal == gdk.KEY_Return {
+		this.SelectedRow().Activate()
+		return true
+	}
+
+	this.InvalidateFilter()
+	return false
+}
 
 // func OptionListNew() *gtk.ListBox {
 // 	optionList, _ := gtk.ListBoxNew()
@@ -103,28 +190,27 @@
 // 	}
 // }
 
-// func SetFilterFunction(optionList *gtk.ListBox, searchBar *gtk.Entry) {
-// 	optionList.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
-// 		query, _ := searchBar.GetText()
-// 		query = strings.ToLower(query)
-// 		queryParts := strings.Split(query, " ")
+func (this *OptionList) SetFilterFunction(searchBar *SearchBar) {
+	this.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
+		query := strings.ToLower(searchBar.Text())
+		queryParts := strings.Split(query, " ")
 
-// 		optionWidget := getOptionWidget(row)
-// 		optionModel := getOptionModel(optionWidget)
+		optionWidget := getOptionWidget(row)
+		optionModel := getOptionModel(optionWidget)
 
-// 		searchTerms := []string{
-// 			strings.ToLower(optionModel.PluginName),
-// 			strings.ToLower(optionModel.Title),
-// 		}
+		searchTerms := []string{
+			strings.ToLower(optionModel.PluginName),
+			strings.ToLower(optionModel.Title),
+		}
 
-// 		for _, searchTerm := range searchTerms {
-// 			for _, queryPart := range queryParts {
-// 				if strings.Contains(searchTerm, queryPart) {
-// 					return true
-// 				}
-// 			}
-// 		}
+		for _, searchTerm := range searchTerms {
+			for _, queryPart := range queryParts {
+				if strings.Contains(searchTerm, queryPart) {
+					return true
+				}
+			}
+		}
 
-// 		return false
-// 	})
-// }
+		return false
+	})
+}

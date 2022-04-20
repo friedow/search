@@ -33,6 +33,7 @@
 package main
 
 import (
+	"friedow/tucan-search/views"
 	"log"
 	"os"
 
@@ -41,7 +42,7 @@ import (
 )
 
 func main() {
-	app := gtk.NewApplication("com.github.diamondburned.gotk4-examples.gtk4.simple", 0)
+	app := gtk.NewApplication("com.github.friedow.tucan-search", 0)
 	app.ConnectActivate(func() { activate(app) })
 
 	glib.TimeoutAdd(2000, func() bool {
@@ -58,8 +59,11 @@ func main() {
 func activate(app *gtk.Application) {
 	window := gtk.NewApplicationWindow(app)
 	window.SetTitle("Tucan Search")
-	window.SetModal(true)
-	window.SetChild(gtk.NewLabel("Hello from Go!"))
 	window.SetDefaultSize(800, 600)
+	window.SetModal(true)
+
+	searchView := views.NewSearchView()
+	window.SetChild(searchView.Box)
+
 	window.Show()
 }
