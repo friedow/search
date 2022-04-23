@@ -1,4 +1,4 @@
-// package plugins
+package plugins
 
 // import (
 // 	"fmt"

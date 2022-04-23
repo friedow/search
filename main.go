@@ -1,35 +1,3 @@
-// package main
-
-// import (
-// 	"log"
-
-// 	"github.com/gotk3/gotk3/gtk"
-// )
-
-// func main() {
-// 	gtk.Init(nil)
-
-// 	win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
-// 	if err != nil {
-// 		log.Fatal("Unable to create window:", err)
-// 	}
-// 	win.SetTitle("Tucan Search")
-// 	win.SetModal(true)
-// 	win.Connect("destroy", func() {
-// 		gtk.MainQuit()
-// 	})
-
-// 	app := App()
-
-// 	win.Add(app)
-
-// 	win.SetDefaultSize(800, 600)
-
-// 	win.ShowAll()
-
-// 	gtk.Main()
-// }
-
 package main
 
 import (

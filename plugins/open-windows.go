@@ -1,4 +1,4 @@
-// package plugins
+package plugins
 
 // import (
 // 	"encoding/json"
@@ -7,7 +7,7 @@
 // 	"os/exec"
 // )
 
-// type OpenWindowsPlugin struct{}
+type OpenWindowsPlugin struct{}
 
 // func (m OpenWindowsPlugin) GetName() string {
 // 	return "Open Windows"

@@ -23,7 +23,7 @@ func NewSearchView() *SearchView {
 	this.searchBar.AddController(searchBarKeyEventController)
 
 	this.optionList = components.NewOptionList()
-	this.optionList.SetFilterFunction(this.searchBar)
+	// this.optionList.SetFilterFunction(this.searchBar)
 
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetMinContentHeight(700)

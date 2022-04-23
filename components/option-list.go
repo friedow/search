@@ -1,7 +1,7 @@
 package components
 
 import (
-	"strings"
+	"friedow/tucan-search/plugins"
 
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -10,74 +10,99 @@ import (
 type OptionList struct {
 	*gtk.ScrolledWindow
 
-	pluginsWrapper struct {
-		*gtk.Box
+	optionList struct {
+		*gtk.ListBox
 
-		plugins []*gtk.ListBox
+		options []*plugins.PluginOption
 	}
 }
 
 func NewOptionList() *OptionList {
 	this := OptionList{}
 
-	this.pluginsWrapper.plugins = []Plugin{
-		// 		GitRepositoriesPlugin{},
-		// 		OpenWindowsPlugin{},
-		// 		ApplicationsPlugin{},
+	this.optionList.ListBox = gtk.NewListBox()
+	this.optionList.SetHeaderFunc(this.setHeader)
+	this.optionList.ConnectRowActivated(this.onActivate)
+
+	this.optionList.options = []*plugins.PluginOption{}
+
+	// TODO: add list of plugin options to this component to acess them in onActivate handlers
+	gitRepositoryPluginOptions := plugins.NewGitRepositoriesPluginOptions()
+	for _, gitRepositoryPluginOption := range gitRepositoryPluginOptions {
+		this.optionList.Append(gitRepositoryPluginOption)
+		var pluginOption plugins.PluginOption = gitRepositoryPluginOption
+		this.optionList.options = append(this.optionList.options, &pluginOption)
 	}
-
-	this.ListBox = gtk.NewListBox()
-
-	this.Append(gtk.NewLabel("test"))
-	this.Append(gtk.NewLabel("test"))
-	this.Append(gtk.NewLabel("test"))
-	this.Append(gtk.NewLabel("test"))
-
-	this.selectFirstRow()
-
-	this.optionList = components.NewOptionList()
-	this.optionList.SetFilterFunction(this.searchBar)
-
-	this.pluginsWrapper.Box = gtk.NewBox(gtk.OrientationHorizontal, 0)
 
 	this.ScrolledWindow = gtk.NewScrolledWindow()
 	this.ScrolledWindow.SetMinContentHeight(700)
-	this.ScrolledWindow.SetChild(this.pluginsWrapper)
+	this.ScrolledWindow.SetChild(this.optionList)
 
 	return &this
 }
 
+func (this *OptionList) setHeader(currentRow *gtk.ListBoxRow, previousRow *gtk.ListBoxRow) {
+	currentHeader := currentRow.Header()
+
+	if previousRow != nil && pluginName(currentRow) == pluginName(previousRow) {
+		if currentHeader == nil {
+			return
+		}
+		currentRow.SetHeader(nil)
+
+	} else {
+		if currentHeader != nil {
+			return
+		}
+		newHeader := gtk.NewLabel(pluginName(currentRow))
+		currentRow.SetHeader(newHeader)
+	}
+}
+
+func (this *OptionList) onActivate(row *gtk.ListBoxRow) {
+	pluginOption(row).OnActivate()
+}
+
 func (this *OptionList) selectFirstRow() {
-	firstRow := this.RowAtIndex(0)
+	firstRow := this.optionList.RowAtIndex(0)
 	if firstRow != nil {
-		this.SelectRow(firstRow)
+		this.optionList.SelectRow(firstRow)
 	}
 }
 
 func (this *OptionList) selectPreviousRow() {
-	currentRow := this.SelectedRow()
+	currentRow := this.optionList.SelectedRow()
 	if currentRow == nil {
 		this.selectFirstRow()
 		return
 	}
 
-	nextRow := this.RowAtIndex(currentRow.Index() - 1)
+	nextRow := this.optionList.RowAtIndex(currentRow.Index() - 1)
 	if nextRow != nil {
-		this.SelectRow(nextRow)
+		this.optionList.SelectRow(nextRow)
 	}
 }
 
 func (this *OptionList) selectNextRow() {
-	currentRow := this.SelectedRow()
+	currentRow := this.optionList.SelectedRow()
 	if currentRow == nil {
 		this.selectFirstRow()
 		return
 	}
 
-	nextRow := this.RowAtIndex(currentRow.Index() + 1)
+	nextRow := this.optionList.RowAtIndex(currentRow.Index() + 1)
 	if nextRow != nil {
-		this.SelectRow(nextRow)
+		this.optionList.SelectRow(nextRow)
 	}
+}
+
+func pluginOption(row *gtk.ListBoxRow) plugins.PluginOption {
+	row.setn
+	return row.Child().(plugins.PluginOption)
+}
+
+func pluginName(row *gtk.ListBoxRow) string {
+	return pluginOption(row).PluginName()
 }
 
 func (this *OptionList) OnKeyPress(keyVal uint) bool {
@@ -92,13 +117,15 @@ func (this *OptionList) OnKeyPress(keyVal uint) bool {
 	}
 
 	if keyVal == gdk.KEY_Return {
-		this.SelectedRow().Activate()
+		this.optionList.SelectedRow().Activate()
 		return true
 	}
 
-	this.InvalidateFilter()
+	this.optionList.InvalidateFilter()
 	return false
 }
+
+// xxxxxxxxxxxxxxxxxxxxxxxxxx
 
 // func OptionListNew() *gtk.ListBox {
 // 	optionList, _ := gtk.ListBoxNew()
@@ -190,27 +217,27 @@ func (this *OptionList) OnKeyPress(keyVal uint) bool {
 // 	}
 // }
 
-func (this *OptionList) SetFilterFunction(searchBar *SearchBar) {
-	this.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
-		query := strings.ToLower(searchBar.Text())
-		queryParts := strings.Split(query, " ")
+// func (this *OptionList) SetFilterFunction(searchBar *SearchBar) {
+// 	this.SetFilterFunc(func(row *gtk.ListBoxRow) bool {
+// 		query := strings.ToLower(searchBar.Text())
+// 		queryParts := strings.Split(query, " ")
 
-		optionWidget := getOptionWidget(row)
-		optionModel := getOptionModel(optionWidget)
+// 		optionWidget := getOptionWidget(row)
+// 		optionModel := getOptionModel(optionWidget)
 
-		searchTerms := []string{
-			strings.ToLower(optionModel.PluginName),
-			strings.ToLower(optionModel.Title),
-		}
+// 		searchTerms := []string{
+// 			strings.ToLower(optionModel.PluginName),
+// 			strings.ToLower(optionModel.Title),
+// 		}
 
-		for _, searchTerm := range searchTerms {
-			for _, queryPart := range queryParts {
-				if strings.Contains(searchTerm, queryPart) {
-					return true
-				}
-			}
-		}
+// 		for _, searchTerm := range searchTerms {
+// 			for _, queryPart := range queryParts {
+// 				if strings.Contains(searchTerm, queryPart) {
+// 					return true
+// 				}
+// 			}
+// 		}
 
-		return false
-	})
-}
+// 		return false
+// 	})
+// }

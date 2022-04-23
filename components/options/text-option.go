@@ -1,4 +1,4 @@
-package components
+package options
 
 import "github.com/diamondburned/gotk4/pkg/gtk/v4"
 
