@@ -21,6 +21,8 @@ func NewSearchView() *SearchView {
 	searchBarKeyEventController := gtk.NewEventControllerKey()
 	searchBarKeyEventController.ConnectKeyPressed(func(keyVal uint, _ uint, _ gdk.ModifierType) bool { return this.optionList.OnKeyPress(keyVal) })
 	this.searchBar.AddController(searchBarKeyEventController)
+	this.searchBar.ConnectActivate(func() { this.optionList.OnActivate() })
+	this.searchBar.ConnectChanged(func() { this.optionList.FilterOptions(this.searchBar.Text()) })
 
 	this.optionList = components.NewOptionList()
 	// this.optionList.SetFilterFunction(this.searchBar)

@@ -27,7 +27,7 @@ func main() {
 func activate(app *gtk.Application) {
 	window := gtk.NewApplicationWindow(app)
 	window.SetTitle("Tucan Search")
-	window.SetDefaultSize(800, 600)
+	// window.SetDefaultSize(800, 600)
 	window.SetModal(true)
 
 	searchView := views.NewSearchView()

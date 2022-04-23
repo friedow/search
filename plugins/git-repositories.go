@@ -74,3 +74,7 @@ func (this GitRepository) PluginName() string {
 func (this GitRepository) OnActivate() {
 	exec.Command("code", this.path).Output()
 }
+
+func (this GitRepository) IsVisible(queryPart string) bool {
+	return strings.Contains(strings.ToLower(this.title), queryPart)
+}
