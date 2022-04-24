@@ -15,7 +15,7 @@ func NewTextOption(title string, action string) *TextOption {
 	this.title = gtk.NewLabel(title)
 	this.action = gtk.NewLabel(action)
 
-	this.Box = gtk.NewBox(gtk.OrientationHorizontal, 0)
+	this.Box = gtk.NewBox(gtk.OrientationHorizontal, 20)
 	this.Append(this.title)
 	this.Append(this.action)
 

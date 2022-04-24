@@ -59,7 +59,7 @@ var _ PluginOption = GitRepository{}
 func NewGitRepository(title string, path string) GitRepository {
 	this := GitRepository{}
 
-	this.TextOption = options.NewTextOption(title, "Enter to open VSCode")
+	this.TextOption = options.NewTextOption(title, "Enter to open")
 
 	this.title = title
 	this.path = path

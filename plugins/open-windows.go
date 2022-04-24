@@ -1,71 +1,76 @@
 package plugins
 
-// import (
-// 	"encoding/json"
-// 	"fmt"
-// 	"friedow/tucan-search/models"
-// 	"os/exec"
-// )
+import (
+	"encoding/json"
+	"fmt"
+	"friedow/tucan-search/components/options"
+	"os/exec"
+	"strings"
+)
 
-type OpenWindowsPlugin struct{}
+type I3MsgJsonPart struct {
+	Id         int             `json:"id"`
+	Name       string          `json:"name"`
+	WindowType string          `json:"window_type"`
+	Nodes      []I3MsgJsonPart `json:"nodes"`
+}
 
-// func (m OpenWindowsPlugin) GetName() string {
-// 	return "Open Windows"
-// }
+func NewOpenWindowsPluginOptions() []*OpenWindow {
+	i3MsgOutput, _ := exec.Command("i3-msg", "-t", "get_tree").Output()
+	i3MsgJson := I3MsgJsonPart{}
+	json.Unmarshal(i3MsgOutput, &i3MsgJson)
 
-// func (m OpenWindowsPlugin) GetOptionModels() []models.OptionModel {
-// 	openWindows := getOpenWindows()
+	return findWindows(i3MsgJson)
+}
 
-// 	options := []models.OptionModel{}
-// 	for _, openWindow := range openWindows {
+func findWindows(i3MsgJsonPart I3MsgJsonPart) []*OpenWindow {
+	if i3MsgJsonPart.WindowType != "" {
+		window := NewOpenWindow(i3MsgJsonPart.Id, i3MsgJsonPart.Name)
+		return []*OpenWindow{window}
+	}
 
-// 		option := models.OptionModel{
-// 			PluginName: m.GetName(),
-// 			Title:      openWindow.Name,
-// 			ActionText: "enter to switch to",
-// 			Data:       openWindow,
-// 		}
-// 		options = append(options, option)
-// 	}
+	if i3MsgJsonPart.Nodes != nil {
+		windows := []*OpenWindow{}
+		for _, i3MsgJsonChild := range i3MsgJsonPart.Nodes {
+			childWindows := findWindows(i3MsgJsonChild)
 
-// 	return options
-// }
+			windows = append(windows, childWindows...)
+		}
+		return windows
+	}
 
-// func (m OpenWindowsPlugin) OnActivate(optionModel models.OptionModel) {
-// 	window := optionModel.Data.(I3MsgJsonPart)
-// 	focusWindowArgument := fmt.Sprintf("[con_id=%d] focus", window.Id)
-// 	exec.Command("i3-msg", focusWindowArgument).Run()
-// }
+	return []*OpenWindow{}
+}
 
-// type I3MsgJsonPart struct {
-// 	Id         int             `json:"id"`
-// 	Name       string          `json:"name"`
-// 	WindowType string          `json:"window_type"`
-// 	Nodes      []I3MsgJsonPart `json:"nodes"`
-// }
+type OpenWindow struct {
+	*options.TextOption
 
-// func getOpenWindows() []I3MsgJsonPart {
-// 	i3MsgOutput, _ := exec.Command("i3-msg", "-t", "get_tree").Output()
-// 	i3MsgJson := I3MsgJsonPart{}
-// 	json.Unmarshal(i3MsgOutput, &i3MsgJson)
+	id    int
+	title string
+}
 
-// 	return findWindows(i3MsgJson)
-// }
+var _ PluginOption = OpenWindow{}
 
-// func findWindows(i3MsgJsonPart I3MsgJsonPart) []I3MsgJsonPart {
-// 	if i3MsgJsonPart.WindowType != "" {
-// 		return []I3MsgJsonPart{i3MsgJsonPart}
-// 	}
+func NewOpenWindow(id int, title string) *OpenWindow {
+	this := OpenWindow{}
 
-// 	if i3MsgJsonPart.Nodes != nil {
-// 		windows := []I3MsgJsonPart{}
-// 		for _, i3MsgJsonChild := range i3MsgJsonPart.Nodes {
-// 			childWindows := findWindows(i3MsgJsonChild)
+	this.TextOption = options.NewTextOption(title, "Enter to jump to")
 
-// 			windows = append(windows, childWindows...)
-// 		}
-// 		return windows
-// 	}
+	this.id = id
+	this.title = title
 
-// 	return []I3MsgJsonPart{}
-// }
+	return &this
+}
+
+func (this OpenWindow) PluginName() string {
+	return "Open Windows"
+}
+
+func (this OpenWindow) OnActivate() {
+	focusWindowArgument := fmt.Sprintf("[con_id=%d] focus", this.id)
+	exec.Command("i3-msg", focusWindowArgument).Run()
+}
+
+func (this OpenWindow) IsVisible(queryPart string) bool {
+	return strings.Contains(strings.ToLower(this.title), queryPart)
+}

@@ -33,10 +33,16 @@ func NewOptionList() *OptionList {
 		this.optionList.Append(gitRepositoryPluginOption)
 	}
 
+	openWindowsPluginOptions := plugins.NewOpenWindowsPluginOptions()
+	for _, openWindowsPluginOption := range openWindowsPluginOptions {
+		var pluginOption plugins.PluginOption = openWindowsPluginOption
+		this.optionList.options = append(this.optionList.options, pluginOption)
+		this.optionList.Append(openWindowsPluginOption)
+	}
+
 	this.selectFirstRow()
 
 	this.ScrolledWindow = gtk.NewScrolledWindow()
-	// this.ScrolledWindow.SetMinContentHeight(700)
 	this.ScrolledWindow.SetChild(this.optionList)
 
 	return &this
@@ -86,10 +92,13 @@ func (this *OptionList) visibleRowIndex(row *gtk.ListBoxRow) int {
 }
 
 func (this *OptionList) selectFirstRow() {
-	firstRow := this.visibleRows()[0]
-	if firstRow != nil {
-		this.optionList.SelectRow(firstRow)
+	visibleRows := this.visibleRows()
+	if len(visibleRows) <= 0 {
+		return
 	}
+
+	firstRow := visibleRows[0]
+	this.optionList.SelectRow(firstRow)
 }
 
 func (this *OptionList) selectPreviousRow() {
