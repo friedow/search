@@ -26,18 +26,25 @@ func NewOptionList() *OptionList {
 
 	this.optionList.options = []plugins.PluginOption{}
 
-	gitRepositoryPluginOptions := plugins.NewGitRepositoriesPluginOptions()
-	for _, gitRepositoryPluginOption := range gitRepositoryPluginOptions {
-		var pluginOption plugins.PluginOption = gitRepositoryPluginOption
-		this.optionList.options = append(this.optionList.options, pluginOption)
-		this.optionList.Append(gitRepositoryPluginOption)
-	}
-
 	openWindowsPluginOptions := plugins.NewOpenWindowsPluginOptions()
 	for _, openWindowsPluginOption := range openWindowsPluginOptions {
 		var pluginOption plugins.PluginOption = openWindowsPluginOption
 		this.optionList.options = append(this.optionList.options, pluginOption)
 		this.optionList.Append(openWindowsPluginOption)
+	}
+
+	applicationsPluginOptions := plugins.NewApplicationsPluginOptions()
+	for _, applicationsPluginOption := range applicationsPluginOptions {
+		var pluginOption plugins.PluginOption = applicationsPluginOption
+		this.optionList.options = append(this.optionList.options, pluginOption)
+		this.optionList.Append(applicationsPluginOption)
+	}
+
+	gitRepositoryPluginOptions := plugins.NewGitRepositoriesPluginOptions()
+	for _, gitRepositoryPluginOption := range gitRepositoryPluginOptions {
+		var pluginOption plugins.PluginOption = gitRepositoryPluginOption
+		this.optionList.options = append(this.optionList.options, pluginOption)
+		this.optionList.Append(gitRepositoryPluginOption)
 	}
 
 	this.selectFirstRow()
@@ -73,7 +80,7 @@ func (this *OptionList) OnActivate() {
 
 func (this *OptionList) visibleRows() []*gtk.ListBoxRow {
 	visibleRows := []*gtk.ListBoxRow{}
-	for optionIndex, _ := range this.optionList.options {
+	for optionIndex := range this.optionList.options {
 		row := this.optionList.RowAtIndex(optionIndex)
 		if row != nil && row.IsVisible() {
 			visibleRows = append(visibleRows, row)

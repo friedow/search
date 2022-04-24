@@ -1,97 +1,90 @@
 package plugins
 
-// import (
-// 	"bufio"
-// 	"friedow/tucan-search/models"
-// 	"io/fs"
-// 	"log"
-// 	"os"
-// 	"os/exec"
-// 	"path/filepath"
-// 	"strings"
+import (
+	"bufio"
+	"friedow/tucan-search/components/options"
+	"io/fs"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
-// 	"github.com/rkoesters/xdg/basedir"
-// 	"github.com/rkoesters/xdg/desktop"
-// )
+	"github.com/rkoesters/xdg/basedir"
+	"github.com/rkoesters/xdg/desktop"
+)
 
-// type ApplicationsPlugin struct{}
+func NewApplicationsPluginOptions() []*Application {
+	applications := []*Application{}
 
-// func (m ApplicationsPlugin) GetName() string {
-// 	return "Applications"
-// }
+	for _, dataDir := range basedir.DataDirs {
+		err := filepath.WalkDir(dataDir+"/applications", func(path string, info fs.DirEntry, _ error) error {
+			if !strings.HasSuffix(path, ".desktop") {
+				return nil
+			}
 
-// func (m ApplicationsPlugin) GetOptionModels() []models.OptionModel {
-// 	desktopEntries := getDesktopEntries()
+			file, err := os.Open(path)
+			if err != nil {
+				panic(err)
+			}
 
-// 	options := []models.OptionModel{}
-// 	for _, desktopEntry := range desktopEntries {
+			reader := bufio.NewReader(file)
+			desktopEntry, _ := desktop.New(reader)
+			application := NewApplication(desktopEntry.Name, path)
+			applications = append(applications, application)
 
-// 		option := models.OptionModel{
-// 			PluginName: m.GetName(),
-// 			Title:      desktopEntry.entry.Name,
-// 			ActionText: "enter to launch",
-// 			Data:       desktopEntry,
-// 		}
-// 		options = append(options, option)
-// 	}
+			return nil
+		})
 
-// 	return options
-// }
+		if err != nil {
+			panic(err)
+		}
+	}
 
-// func (m ApplicationsPlugin) OnActivate(optionModel models.OptionModel) {
-// 	desktopEntry := optionModel.Data.(DesktopEntryWithPath)
-// 	log.Print(desktopEntry)
-// 	exec.Command("xdg-open", desktopEntry.path).Run()
-// }
+	return filterDuplicateApplications(applications)
+}
 
-// type DesktopEntryWithPath struct {
-// 	path  string
-// 	entry *desktop.Entry
-// }
+func filterDuplicateApplications(applications []*Application) []*Application {
+	applicationsMap := map[string]*Application{}
+	for _, application := range applications {
+		applicationsMap[application.title] = application
+	}
 
-// func getDesktopEntries() []DesktopEntryWithPath {
-// 	desktopEntries := []DesktopEntryWithPath{}
+	uniqueApplications := []*Application{}
+	for _, application := range applicationsMap {
+		uniqueApplications = append(uniqueApplications, application)
+	}
 
-// 	for _, dataDir := range basedir.DataDirs {
-// 		err := filepath.WalkDir(dataDir+"/applications", func(path string, info fs.DirEntry, err error) error {
-// 			if !strings.HasSuffix(path, ".desktop") {
-// 				return nil
-// 			}
+	return uniqueApplications
+}
 
-// 			file, err := os.Open(path)
-// 			if err != nil {
-// 				panic(err)
-// 			}
+type Application struct {
+	*options.TextOption
 
-// 			reader := bufio.NewReader(file)
-// 			desktopEntry, _ := desktop.New(reader)
-// 			desktopEntryWithPath := DesktopEntryWithPath{
-// 				path:  path,
-// 				entry: desktopEntry,
-// 			}
-// 			desktopEntries = append(desktopEntries, desktopEntryWithPath)
+	title string
+	path  string
+}
 
-// 			return nil
-// 		})
+var _ PluginOption = Application{}
 
-// 		if err != nil {
-// 			panic(err)
-// 		}
-// 	}
+func NewApplication(title string, path string) *Application {
+	this := Application{}
 
-// 	return filterDuplicateDesktopEntries(desktopEntries)
-// }
+	this.TextOption = options.NewTextOption(title, "Enter to launch")
 
-// func filterDuplicateDesktopEntries(desktopEntries []DesktopEntryWithPath) []DesktopEntryWithPath {
-// 	desktopEntiesMap := map[string]DesktopEntryWithPath{}
-// 	for _, desktopEntry := range desktopEntries {
-// 		desktopEntiesMap[desktopEntry.entry.Name] = desktopEntry
-// 	}
+	this.title = title
+	this.path = path
 
-// 	uniqueDesktopEntries := []DesktopEntryWithPath{}
-// 	for _, desktopEntry := range desktopEntiesMap {
-// 		uniqueDesktopEntries = append(uniqueDesktopEntries, desktopEntry)
-// 	}
+	return &this
+}
 
-// 	return uniqueDesktopEntries
-// }
+func (this Application) PluginName() string {
+	return "Applications"
+}
+
+func (this Application) OnActivate() {
+	exec.Command("xdg-open", this.path).Run()
+}
+
+func (this Application) IsVisible(queryPart string) bool {
+	return strings.Contains(strings.ToLower(this.title), queryPart)
+}
