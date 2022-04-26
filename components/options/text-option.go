@@ -5,19 +5,27 @@ import "github.com/diamondburned/gotk4/pkg/gtk/v4"
 type TextOption struct {
 	*gtk.Box
 
-	title  *gtk.Label
-	action *gtk.Label
+	titleLabel  *gtk.Label
+	actionLabel *gtk.Label
 }
 
 func NewTextOption(title string, action string) *TextOption {
 	this := TextOption{}
 
-	this.title = gtk.NewLabel(title)
-	this.action = gtk.NewLabel(action)
+	this.titleLabel = gtk.NewLabel(title)
+	this.actionLabel = gtk.NewLabel(action)
 
 	this.Box = gtk.NewBox(gtk.OrientationHorizontal, 20)
-	this.Append(this.title)
-	this.Append(this.action)
+	this.Append(this.titleLabel)
+	this.Append(this.actionLabel)
 
 	return &this
+}
+
+func (this TextOption) SetTitle(title string) {
+	this.titleLabel.SetText(title)
+}
+
+func (this TextOption) SetAction(action string) {
+	this.actionLabel.SetText(action)
 }

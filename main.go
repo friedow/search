@@ -2,21 +2,14 @@ package main
 
 import (
 	"friedow/tucan-search/views"
-	"log"
 	"os"
 
-	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
 func main() {
 	app := gtk.NewApplication("com.github.friedow.tucan-search", 0)
 	app.ConnectActivate(func() { activate(app) })
-
-	glib.TimeoutAdd(2000, func() bool {
-		log.Print("toast")
-		return true
-	})
 
 	code := app.Run(os.Args)
 	if code > 0 {

@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func NewGitRepositoriesPluginOptions() []*GitRepository {
+func NewGitRepositoriesPluginOptions() []PluginOption {
 	home := os.Getenv("HOME")
 	gitRepositories := []*GitRepository{}
 
@@ -44,7 +44,11 @@ func NewGitRepositoriesPluginOptions() []*GitRepository {
 		},
 	)
 
-	return gitRepositories
+	pluginOptions := []PluginOption{}
+	for _, gitRepository := range gitRepositories {
+		pluginOptions = append(pluginOptions, gitRepository)
+	}
+	return pluginOptions
 }
 
 type GitRepository struct {

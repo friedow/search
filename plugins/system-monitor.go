@@ -1,70 +1,132 @@
 package plugins
 
-// import (
-// 	"fmt"
-// 	"friedow/tucan-search/models"
-// 	"os/exec"
-// )
+import (
+	"fmt"
+	"friedow/tucan-search/components/options"
+	"strings"
 
-// type SystemMonitorPlugin struct{}
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
+	"github.com/distatus/battery"
+)
 
-// func (m SystemMonitorPlugin) GetName() string {
-// 	return "System Monitor"
+func NewSystemMonitorPluginOptions() []PluginOption {
+	systemStatistics := []PluginOption{}
+
+	if firstBattery() != nil {
+		systemStatistics = append(systemStatistics, newBatteryStatistic())
+	}
+
+	return systemStatistics
+}
+
+func firstBattery() *battery.Battery {
+	batteries, err := battery.GetAll()
+
+	if len(batteries) <= 0 || err != nil {
+		return nil
+	}
+
+	return batteries[0]
+}
+
+type BatteryStatistic struct {
+	*SystemStatistic
+}
+
+func newBatteryStatistic() *BatteryStatistic {
+	this := BatteryStatistic{}
+
+	this.SystemStatistic = NewSystemStatistic("Battery", this.CurrentValue(), this.MaximumCapacity(), "mWh")
+
+	glib.TimeoutAdd(1000, func() bool {
+		this.SetCurrentValue(this.CurrentValue())
+		this.SetTitle(this.Title())
+		return true
+	})
+
+	return &this
+}
+
+// func (this BatteryStatistic) SetCurrentValue(currentValue float64) {
+// 	this.currentValue = currentValue
+// 	this.SetTitle(this.Title())
+// 	this.SetProgress(this.currentProgress() * 0.01)
 // }
 
-// func (m SystemMonitorPlugin) GetOptionModels() []models.OptionModel {
-// 	openWindows := getOpenWindows()
+func (this BatteryStatistic) Title() string {
+	return fmt.Sprintf("%s %d%% %s", this.name, int(this.currentProgress()), this.State())
+}
 
-// 	options := []models.OptionModel{}
-// 	for _, openWindow := range openWindows {
+func (this BatteryStatistic) CurrentValue() float64 {
+	battery := firstBattery()
+	if battery == nil {
+		return 0
+	}
+	return battery.Current
+}
 
-// 		option := models.OptionModel{
-// 			PluginName: m.GetName(),
-// 			Title:      openWindow.Name,
-// 			ActionText: "enter to switch to",
-// 			Data:       openWindow,
-// 		}
-// 		options = append(options, option)
-// 	}
+func (this BatteryStatistic) MaximumCapacity() float64 {
+	battery := firstBattery()
+	if battery == nil {
+		return 0
+	}
+	return battery.Full
+}
 
-// 	return options
-// }
+func (this BatteryStatistic) State() string {
+	battery := firstBattery()
+	if battery == nil {
+		return ""
+	}
+	return battery.State.String()
+}
 
-// func (m SystemMonitorPlugin) OnActivate(optionModel models.OptionModel) {
-// 	window := optionModel.Data.(I3MsgJsonPart)
-// 	focusWindowArgument := fmt.Sprintf("[con_id=%d] focus", window.Id)
-// 	exec.Command("i3-msg", focusWindowArgument).Run()
-// }
+type SystemStatistic struct {
+	*options.ProgressOption
 
-// // type I3MsgJsonPart struct {
-// // 	Id         int             `json:"id"`
-// // 	Name       string          `json:"name"`
-// // 	WindowType string          `json:"window_type"`
-// // 	Nodes      []I3MsgJsonPart `json:"nodes"`
-// // }
+	name            string
+	currentValue    float64
+	maximumCapacity float64
+	unit            string
+}
 
-// // func getOpenWindows() []I3MsgJsonPart {
-// // 	i3MsgOutput, _ := exec.Command("i3-msg", "-t", "get_tree").Output()
-// // 	i3MsgJson := I3MsgJsonPart{}
-// // 	json.Unmarshal(i3MsgOutput, &i3MsgJson)
+var _ PluginOption = SystemStatistic{}
 
-// // 	return findWindows(i3MsgJson)
-// // }
+func NewSystemStatistic(name string, currentValue float64, maximumCapacity float64, unit string) *SystemStatistic {
+	this := SystemStatistic{}
 
-// // func findWindows(i3MsgJsonPart I3MsgJsonPart) []I3MsgJsonPart {
-// // 	if i3MsgJsonPart.WindowType != "" {
-// // 		return []I3MsgJsonPart{i3MsgJsonPart}
-// // 	}
+	this.name = name
+	this.maximumCapacity = maximumCapacity
+	this.unit = unit
 
-// // 	if i3MsgJsonPart.Nodes != nil {
-// // 		windows := []I3MsgJsonPart{}
-// // 		for _, i3MsgJsonChild := range i3MsgJsonPart.Nodes {
-// // 			childWindows := findWindows(i3MsgJsonChild)
+	this.ProgressOption = options.NewProgressOption(this.Title(), "", 0)
+	this.SetCurrentValue(currentValue)
 
-// // 			windows = append(windows, childWindows...)
-// // 		}
-// // 		return windows
-// // 	}
+	return &this
+}
 
-// // 	return []I3MsgJsonPart{}
-// // }
+func (this SystemStatistic) PluginName() string {
+	return "System Monitor"
+}
+
+func (this SystemStatistic) OnActivate() {
+	// do nothing
+}
+
+func (this SystemStatistic) IsVisible(queryPart string) bool {
+	return strings.Contains(strings.ToLower(this.name), queryPart)
+}
+
+func (this SystemStatistic) SetCurrentValue(currentValue float64) {
+	this.currentValue = currentValue
+	this.SetTitle(this.Title())
+	this.SetProgress(this.currentProgress() * 0.01)
+}
+
+func (this SystemStatistic) Title() string {
+	return fmt.Sprintf("%s %d%% (%d / %d %s)", this.name, int(this.currentProgress()), int(this.currentValue), int(this.maximumCapacity), this.unit)
+}
+
+func (this SystemStatistic) currentProgress() float64 {
+	return this.currentValue * 100 / this.maximumCapacity
+}

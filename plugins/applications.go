@@ -13,7 +13,7 @@ import (
 	"github.com/rkoesters/xdg/desktop"
 )
 
-func NewApplicationsPluginOptions() []*Application {
+func NewApplicationsPluginOptions() []PluginOption {
 	applications := []*Application{}
 
 	for _, dataDir := range basedir.DataDirs {
@@ -40,7 +40,13 @@ func NewApplicationsPluginOptions() []*Application {
 		}
 	}
 
-	return filterDuplicateApplications(applications)
+	uniqueApplications := filterDuplicateApplications(applications)
+
+	pluginOptions := []PluginOption{}
+	for _, uniqueApplication := range uniqueApplications {
+		pluginOptions = append(pluginOptions, uniqueApplication)
+	}
+	return pluginOptions
 }
 
 func filterDuplicateApplications(applications []*Application) []*Application {

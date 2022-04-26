@@ -24,27 +24,10 @@ func NewOptionList() *OptionList {
 	this.optionList.ListBox = gtk.NewListBox()
 	this.optionList.SetHeaderFunc(this.setHeader)
 
-	this.optionList.options = []plugins.PluginOption{}
+	this.optionList.options = plugins.PluginOptions()
 
-	openWindowsPluginOptions := plugins.NewOpenWindowsPluginOptions()
-	for _, openWindowsPluginOption := range openWindowsPluginOptions {
-		var pluginOption plugins.PluginOption = openWindowsPluginOption
-		this.optionList.options = append(this.optionList.options, pluginOption)
-		this.optionList.Append(openWindowsPluginOption)
-	}
-
-	applicationsPluginOptions := plugins.NewApplicationsPluginOptions()
-	for _, applicationsPluginOption := range applicationsPluginOptions {
-		var pluginOption plugins.PluginOption = applicationsPluginOption
-		this.optionList.options = append(this.optionList.options, pluginOption)
-		this.optionList.Append(applicationsPluginOption)
-	}
-
-	gitRepositoryPluginOptions := plugins.NewGitRepositoriesPluginOptions()
-	for _, gitRepositoryPluginOption := range gitRepositoryPluginOptions {
-		var pluginOption plugins.PluginOption = gitRepositoryPluginOption
-		this.optionList.options = append(this.optionList.options, pluginOption)
-		this.optionList.Append(gitRepositoryPluginOption)
+	for _, option := range this.optionList.options {
+		this.optionList.Append(option)
 	}
 
 	this.selectFirstRow()

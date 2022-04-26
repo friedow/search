@@ -15,12 +15,17 @@ type I3MsgJsonPart struct {
 	Nodes      []I3MsgJsonPart `json:"nodes"`
 }
 
-func NewOpenWindowsPluginOptions() []*OpenWindow {
+func NewOpenWindowsPluginOptions() []PluginOption {
 	i3MsgOutput, _ := exec.Command("i3-msg", "-t", "get_tree").Output()
 	i3MsgJson := I3MsgJsonPart{}
 	json.Unmarshal(i3MsgOutput, &i3MsgJson)
+	windows := findWindows(i3MsgJson)
 
-	return findWindows(i3MsgJson)
+	pluginOptions := []PluginOption{}
+	for _, window := range windows {
+		pluginOptions = append(pluginOptions, window)
+	}
+	return pluginOptions
 }
 
 func findWindows(i3MsgJsonPart I3MsgJsonPart) []*OpenWindow {
