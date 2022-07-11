@@ -1,6 +1,10 @@
 package plugins
 
-import "github.com/diamondburned/gotk4/pkg/gtk/v4"
+import (
+	"sync"
+
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+)
 
 type PluginOption interface {
 	gtk.Widgetter
@@ -11,12 +15,32 @@ type PluginOption interface {
 }
 
 func PluginOptions() []PluginOption {
+	newPluginOptionsFunctions := []func() []PluginOption{
+		newClockPluginOptions,
+		newSystemMonitorPluginOptions,
+		newOpenWindowsPluginOptions,
+		newApplicationsPluginOptions,
+		newGitRepositoriesPluginOptions,
+	}
+
+	var pluginOptionsPromises sync.WaitGroup
+	pluginOptionsChannel := make(chan []PluginOption, len(newPluginOptionsFunctions))
+
+	for _, newPluginOptionsFunction := range newPluginOptionsFunctions {
+		pluginOptionsPromises.Add(1)
+
+		go func(function func() []PluginOption, result chan []PluginOption) {
+			defer pluginOptionsPromises.Done()
+			result <- function()
+		}(newPluginOptionsFunction, pluginOptionsChannel)
+	}
+	pluginOptionsPromises.Wait()
+	close(pluginOptionsChannel)
+
 	pluginOptions := []PluginOption{}
-	pluginOptions = append(pluginOptions, newClockPluginOptions()...)
-	pluginOptions = append(pluginOptions, newSystemMonitorPluginOptions()...)
-	pluginOptions = append(pluginOptions, newOpenWindowsPluginOptions()...)
-	pluginOptions = append(pluginOptions, newApplicationsPluginOptions()...)
-	pluginOptions = append(pluginOptions, newGitRepositoriesPluginOptions()...)
-	// newNetworkManagerPluginOptions()
+	for resultingPluginOptions := range pluginOptionsChannel {
+		pluginOptions = append(pluginOptions, resultingPluginOptions...)
+	}
+
 	return pluginOptions
 }

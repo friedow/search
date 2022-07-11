@@ -23,7 +23,6 @@ func newApplicationsPluginOptions() []PluginOption {
 
 	for _, dataDir := range appDirs {
 		err := filepath.WalkDir(dataDir, func(path string, info fs.DirEntry, _ error) error {
-			log.Print(path)
 			if !strings.HasSuffix(path, ".desktop") {
 				return nil
 			}
